@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Soar</title>
+  <style>
+    /* Overall Body Styling */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    /* Container for the content */
+    .container {
+      position: relative;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      text-align: center;
+      width: 90%;
+      max-width: 500px;
+      overflow: hidden;
+    }
+
+    /* Title and subtitle */
+    h1 {
+      font-size: 2.5em;
+      color: #007BFF;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 1.1em;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    /* File input styling */
+    input[type="file"] {
+      margin: 20px 0;
+      padding: 10px;
+      border: 2px dashed #007BFF;
+      border-radius: 5px;
+      background: transparent;
+      color: #333;
+      cursor: pointer;
+      transition: border-color 0.3s ease;
+    }
+    input[type="file"]:hover {
+      border-color: #0056b3;
+    }
+
+    /* Upload button styling */
+    .upload-btn {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 1em;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .upload-btn:hover {
+      background-color: #0056b3;
+    }
+
+    /* Progress bar container & bar */
+    .progress-container {
+      width: 100%;
+      background-color: #f3f3f3;
+      border-radius: 5px;
+      margin: 20px 0;
+      overflow: hidden;
+      height: 20px;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+      display: none;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background-color: #007BFF;
+      transition: width 0.4s ease;
+    }
+
+    /* Download link styling */
+    .download-link {
+      margin-top: 20px;
+      font-size: 1.1em;
+      color: #007BFF;
+    }
+
+    /* Airplane Animation */
+    .airplane {
+      position: absolute;
+      top: -50px;
+      left: -50px;
+      width: 100px;
+      opacity: 0.8;
+      animation: fly 8s linear infinite;
+    }
+    @keyframes fly {
+      0% {
+        transform: translate(-100px, 0);
+      }
+      50% {
+        transform: translate(400px, 50px) rotate(15deg);
+      }
+      100% {
+        transform: translate(800px, -100px) rotate(0deg);
+      }
+    }
+
+    .upload-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .copy-btn {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1em;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.3s ease;
+    }
+    .copy-btn:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Airplane icon for style -->
+    <img
+      src="https://img.icons8.com/color/96/000000/airplane-take-off.png"
+      alt="Airplane"
+      class="airplane"
+    />
+    <h1>Soar</h1>
+    <p>Making Files Fly</p>
+    <div class="upload-container">
+      <input type="file" id="fileInput" />
+      <button class="upload-btn" onclick="uploadFile()">Upload</button>
+    </div>
+
+    <!-- Progress bar container -->
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Download link will appear here -->
+    <div class="download-link" id="downloadLink"></div>
+  </div>
+
+  <script>
+    function uploadFile() {
+      const fileInput = document.getElementById('fileInput').files[0];
+      if (!fileInput) {
+        alert('Please select a file first.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', fileInput);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/upload', true);
+
+      // Display progress bar
+      const progressContainer = document.getElementById('progressContainer');
+      const progressBar = document.getElementById('progressBar');
+      progressContainer.style.display = 'block';
+
+      // Update progress bar during upload
+      xhr.upload.onprogress = function (e) {
+        if (e.lengthComputable) {
+          const percentComplete = (e.loaded / e.total) * 100;
+          progressBar.style.width = percentComplete + '%';
+        }
+      };
+
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          const downloadUrl = response.download_url;
+          const originalFilename = response.original_filename;
+          document.getElementById('downloadLink').innerHTML = `
+            <p>File uploaded! <a href="${downloadUrl}" target="_blank">Download ${originalFilename}</a></p>
+            <button class="copy-btn" onclick="copyToClipboard('${downloadUrl}')">Copy Link</button>
+          `;
+        } else {
+          alert('Upload failed. Status: ' + xhr.status);
+        }
+        // Reset progress bar
+        progressBar.style.width = '0';
+        progressContainer.style.display = 'none';
+      };
+
+      xhr.onerror = function () {
+        alert('An error occurred while uploading the file.');
+        // Reset progress bar
+        progressBar.style.width = '0';
+        progressContainer.style.display = 'none';
+      };
+
+      xhr.send(formData);
+    }
+
+    function copyToClipboard(text) {
+      const tempInput = document.createElement('input');
+      tempInput.value = text;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      alert('Link copied to clipboard!');
+    }
+  </script>
+</body>
+</html>
