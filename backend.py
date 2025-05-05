@@ -62,4 +62,5 @@ def download_file(unique_filename):
 
 # Run the app
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))  # Use PORT environment variable provided by Render
+    app.run(host='0.0.0.0', port=port, debug=False)  # Bind to 0.0.0.0 for external access
