@@ -48,7 +48,7 @@ def upload_file():
         save_file_mapping()
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         file.save(filepath)
-        download_url = url_for('download_file', unique_filename=unique_filename, _external=True)
+        download_url = url_for('download_page', unique_filename=unique_filename, _external=True)
         return jsonify({"download_url": download_url, "original_filename": file.filename})
     return "File upload failed.", 400
 
@@ -58,6 +58,15 @@ def download_file(unique_filename):
     original_filename = file_mapping.get(unique_filename)
     if original_filename:
         return send_from_directory(app.config['UPLOAD_FOLDER'], unique_filename, as_attachment=True, download_name=original_filename)
+    return "File not found.", 404
+
+# Add the new route for a clean download page
+@app.route('/download/<unique_filename>')
+def download_page(unique_filename):
+    original_filename = file_mapping.get(unique_filename)
+    if original_filename:
+        download_url = url_for('download_file', unique_filename=unique_filename, _external=True)
+        return render_template('download.html', download_url=download_url, original_filename=original_filename)
     return "File not found.", 404
 
 # Run the app
